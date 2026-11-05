@@ -43,7 +43,10 @@
     <script>
         async function loadWiki() {
             try {
-                const res = await fetch('./content/index.json');
+                // 自動適應 GitHub Pages 子目錄的絕對路徑
+                const basePath = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
+                
+                const res = await fetch(basePath + 'content/index.json');
                 if (!res.ok) throw new Error('Cannot load index.json');
                 const data = await res.json();
                 
@@ -60,12 +63,14 @@
                     ul.className = 'space-y-1';
 
                     cat.articles.forEach((art, idx) => {
+                        // 清理選單路徑中的 .md，讓 hash 保持乾淨
+                        const cleanArtPath = art.path.replace(/\.md$/, '');
                         if (!firstFile && idx === 0 && cat === data.categories[0]) {
-                            firstFile = art.path;
+                            firstFile = cleanArtPath;
                         }
                         const li = document.createElement('li');
                         li.innerHTML = `
-                            <a href="#${art.path}" onclick="loadMarkdown('${art.path}')" 
+                            <a href="#${cleanArtPath}" onclick="loadMarkdown('${cleanArtPath}')" 
                                class="block px-3 py-2 rounded-lg text-sm text-stone-600 hover:bg-amber-50 hover:text-amber-800 transition font-medium">
                                 ${art.title}
                             </a>
@@ -86,13 +91,11 @@
         async function loadMarkdown(path) {
             if (!path) return;
             try {
-                let cleanPath = path.replace(/^\/+/, '');
-                if (!cleanPath.endsWith('.md')) {
-                    cleanPath += '.md';
-                }
                 
-                // 動態取得當前專案的絕對路徑底座（例如 /fancy-rat-wiki/）
-                const basePath = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
+                let cleanPath = path.replace(/^\/+/, '').replace(/\.md$/, '');
+                cleanPath += '.md';
+                
+                const basePath = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
                 const targetUrl = basePath + 'content/' + cleanPath;
                 
                 const res = await fetch(targetUrl);
@@ -104,11 +107,11 @@
             } catch (err) {
                 document.getElementById('content-area').innerHTML = `
                     <h2 class="text-red-600 font-bold mb-2">找不到文章內容</h2>
-                    <p class="text-stone-600 mb-4">無法讀取 <code>content/${path}</code></p>
+                    <p class="text-stone-600 mb-4">無法讀取 <code>content/${path}.md</code></p>
                     <div class="bg-amber-50 p-4 rounded-lg text-xs text-stone-500">
                         <strong>檢查建議：</strong><br>
                         1. 請確認 GitHub 的 <code>content/</code> 資料夾內是否有該檔案。<br>
-                        2. 請確認資料夾與檔案名稱的大小寫與連字號（例如全部小寫且使用 <code>-</code> ）。
+                        2. 請確認資料夾與檔案名稱的大小寫與連字號。
                     </div>`;
             }
         }
