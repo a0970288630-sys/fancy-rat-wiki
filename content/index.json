@@ -1,0 +1,16 @@
+{
+  "categories": [
+    {
+      "name": "基礎認識",
+      "articles": [
+        { "title": "什麼是花枝鼠？", "path": "intro/what-is-fancy-rat.md" }
+      ]
+    },
+    {
+      "name": "環境與照護",
+      "articles": [
+        { "title": "籠舍佈置與必備用品", "path": "care/cage-setup.md" }
+      ]
+    }
+  ]
+}
