@@ -91,7 +91,8 @@
                     cleanPath += '.md';
                 }
                 
-                const res = await fetch(`./content/${cleanPath}`);
+                const repoBase = window.location.pathname.replace(/\/[^/]*$/, '/');
+                const res = await fetch(repoBase + 'content/' + cleanPath);
                 if (!res.ok) throw new Error('File not found');
                 
                 const markdownText = await res.text();
