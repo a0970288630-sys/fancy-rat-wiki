@@ -41,12 +41,13 @@
     </div>
 
     <script>
+        // 直接鎖定 GitHub Pages 的專案資料夾名稱，徹底根治路徑問題
+        const isGitHub = window.location.hostname.includes('github.io');
+        const BASE_URL = isGitHub ? '/fancy-rat-wiki/' : './';
+
         async function loadWiki() {
             try {
-                // 自動適應 GitHub Pages 子目錄的絕對路徑
-                const basePath = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
-                
-                const res = await fetch(basePath + 'content/index.json');
+                const res = await fetch(BASE_URL + 'content/index.json');
                 if (!res.ok) throw new Error('Cannot load index.json');
                 const data = await res.json();
                 
@@ -63,8 +64,7 @@
                     ul.className = 'space-y-1';
 
                     cat.articles.forEach((art, idx) => {
-                        // 清理選單路徑中的 .md，讓 hash 保持乾淨
-                        const cleanArtPath = art.path.replace(/\.md$/, '');
+                        const cleanArtPath = art.path.replace(/^\/+/, '').replace(/\.md$/, '');
                         if (!firstFile && idx === 0 && cat === data.categories[0]) {
                             firstFile = cleanArtPath;
                         }
@@ -91,15 +91,13 @@
         async function loadMarkdown(path) {
             if (!path) return;
             try {
-                
                 let cleanPath = path.replace(/^\/+/, '').replace(/\.md$/, '');
                 cleanPath += '.md';
                 
-                const basePath = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
-                const targetUrl = basePath + 'content/' + cleanPath;
+                const targetUrl = BASE_URL + 'content/' + cleanPath;
                 
                 const res = await fetch(targetUrl);
-                if (!res.ok) throw new Error('File not found');
+                if (!res.ok) throw new Error('File not found: ' + targetUrl);
                 
                 const markdownText = await res.text();
                 const contentWithoutFrontmatter = markdownText.replace(/^---[\s\S]*?---/, '');
