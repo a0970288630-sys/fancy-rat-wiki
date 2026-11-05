@@ -41,12 +41,9 @@
     </div>
 
     <script>
-        // 自動偵測當前基礎路徑，防止多層資料夾造成 404
-        const basePath = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
-
         async function loadWiki() {
             try {
-                const res = await fetch(basePath + 'content/index.json');
+                const res = await fetch('./content/index.json');
                 const data = await res.json();
                 
                 const navContainer = document.getElementById('nav-links');
@@ -88,12 +85,27 @@
         async function loadMarkdown(path) {
             if (!path) return;
             try {
-                const res = await fetch(basePath + `content/${path}`);
+                // 清理路徑：移除開頭斜線並確保結尾只有一個 .md
+                let cleanPath = path.replace(/^\/+/, '');
+                if (!cleanPath.endsWith('.md')) {
+                    cleanPath += '.md';
+                }
+                
+                const res = await fetch(`./content/${cleanPath}`);
+                if (!res.ok) throw new Error('File not found');
+                
                 const markdownText = await res.text();
                 const contentWithoutFrontmatter = markdownText.replace(/^---[\s\S]*?---/, '');
                 document.getElementById('content-area').innerHTML = marked.parse(contentWithoutFrontmatter);
             } catch (err) {
-                document.getElementById('content-area').innerHTML = `<h2 class="text-red-600 font-bold">找不到文章</h2><p>無法讀取 content/${path}</p>`;
+                document.getElementById('content-area').innerHTML = `
+                    <h2 class="text-red-600 font-bold mb-2">找不到文章內容</h2>
+                    <p class="text-stone-600 mb-4">無法讀取 <code>content/${path}</code></p>
+                    <div class="bg-amber-50 p-4 rounded-lg text-xs text-stone-500">
+                        <strong>檢查建議：</strong><br>
+                        1. 請確認 GitHub 的 <code>content/</code> 資料夾內是否有該檔案。<br>
+                        2. 請確認資料夾與檔案名稱的大小寫與連字號（例如全部小寫且使用 <code>-</code> ）。
+                    </div>`;
             }
         }
 
