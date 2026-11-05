@@ -86,13 +86,16 @@
         async function loadMarkdown(path) {
             if (!path) return;
             try {
-                // 自動清理與正規化路徑
                 let cleanPath = path.replace(/^\/+/, '');
                 if (!cleanPath.endsWith('.md')) {
                     cleanPath += '.md';
                 }
                 
-                const res = await fetch('./content/' + cleanPath);
+                // 動態取得當前專案的絕對路徑底座（例如 /fancy-rat-wiki/）
+                const basePath = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
+                const targetUrl = basePath + 'content/' + cleanPath;
+                
+                const res = await fetch(targetUrl);
                 if (!res.ok) throw new Error('File not found');
                 
                 const markdownText = await res.text();
