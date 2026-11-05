@@ -44,6 +44,7 @@
         async function loadWiki() {
             try {
                 const res = await fetch('./content/index.json');
+                if (!res.ok) throw new Error('Cannot load index.json');
                 const data = await res.json();
                 
                 const navContainer = document.getElementById('nav-links');
@@ -85,8 +86,13 @@
         async function loadMarkdown(path) {
             if (!path) return;
             try {
-               
-                const res = await fetch('content/' + path);
+                // 自動清理與正規化路徑
+                let cleanPath = path.replace(/^\/+/, '');
+                if (!cleanPath.endsWith('.md')) {
+                    cleanPath += '.md';
+                }
+                
+                const res = await fetch('./content/' + cleanPath);
                 if (!res.ok) throw new Error('File not found');
                 
                 const markdownText = await res.text();
@@ -103,14 +109,6 @@
                     </div>`;
             }
         }
-🎯 儲存與確認：
-貼上後，點擊下方綠色的 Commit changes 儲存。
-
-等候 1 分鐘讓 GitHub 更新。
-
-回到網頁按下 Ctrl + F5 強制重新整理。
-
-這一次點擊左側選單的任何一篇文章，內容就會直接完美渲染出來囉！
 
         window.addEventListener('hashchange', () => {
             const hash = window.location.hash.substring(1);
