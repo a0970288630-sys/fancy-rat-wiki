@@ -1,125 +1,640 @@
+
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FancyRat-Wiki | 花枝鼠新手照護與日常知識庫</title>
+
+    <title>FancyRat-Wiki | 花枝鼠知識小百科</title>
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Marked.js for Markdown parsing -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.js"></script>
-</head>
-<body class="bg-amber-50/50 text-stone-800 font-sans antialiased">
 
-    <div class="min-h-screen flex flex-col md:flex-row">
-        <!-- 側邊導覽列 -->
-        <aside class="w-full md:w-72 bg-white border-r border-amber-100 p-6 flex flex-col justify-between shadow-sm">
-            <div>
-                <div class="flex items-center space-x-3 mb-8">
-                    <span class="text-3xl">🐀</span>
-                    <div>
-                        <h1 class="font-bold text-lg text-amber-900">FancyRat-Wiki</h1>
-                        <p class="text-xs text-stone-500">花枝鼠新手照護知識庫</p>
-                    </div>
-                </div>
-                <nav id="nav-links" class="space-y-2">
-                    <!-- 動態載入選單 -->
-                </nav>
-            </div>
-            <div class="mt-8 pt-4 border-t border-stone-100 text-xs text-stone-400 text-center">
-                Powered by AI & Claude Rules
-            </div>
-        </aside>
+    <!-- Markdown 套件 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
 
-        <!-- 主內容區 -->
-        <main class="flex-1 p-6 md:p-12 max-w-4xl mx-auto w-full">
-            <article id="content-area" class="prose prose-amber max-w-none bg-white p-8 md:p-12 rounded-2xl shadow-sm border border-amber-100">
-                <h2 class="text-2xl font-bold text-amber-900 mb-4">載入中...</h2>
-                <p class="text-stone-600">正在讀取知識庫內容，請稍候。</p>
-            </article>
-        </main>
-    </div>
-
+    <!-- Markdown 文章排版 -->
     <script>
-        // 直接鎖定 GitHub Pages 的專案資料夾名稱，徹底根治路徑問題
-        const isGitHub = window.location.hostname.includes('github.io');
-        const BASE_URL = isGitHub ? '/fancy-rat-wiki/' : './';
-
-        async function loadWiki() {
-            try {
-                const res = await fetch(BASE_URL + 'content/index.json');
-                if (!res.ok) throw new Error('Cannot load index.json');
-                const data = await res.json();
-                
-                const navContainer = document.getElementById('nav-links');
-                navContainer.innerHTML = '';
-
-                let firstFile = '';
-
-                data.categories.forEach(cat => {
-                    const section = document.createElement('div');
-                    section.innerHTML = `<p class="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-2 mt-4">${cat.name}</p>`;
-                    
-                    const ul = document.createElement('ul');
-                    ul.className = 'space-y-1';
-
-                    cat.articles.forEach((art, idx) => {
-                        const cleanArtPath = art.path.replace(/^\/+/, '').replace(/\.md$/, '');
-                        if (!firstFile && idx === 0 && cat === data.categories[0]) {
-                            firstFile = cleanArtPath;
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        rat: {
+                            cream: '#FFFCF5',
+                            beige: '#F5EBD8',
+                            brown: '#8B6245',
+                            dark: '#65452F'
                         }
-                        const li = document.createElement('li');
-                        li.innerHTML = `
-                            <a href="#${cleanArtPath}" onclick="loadMarkdown('${cleanArtPath}')" 
-                               class="block px-3 py-2 rounded-lg text-sm text-stone-600 hover:bg-amber-50 hover:text-amber-800 transition font-medium">
-                                ${art.title}
-                            </a>
-                        `;
-                        ul.appendChild(li);
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style>
+        body {
+            font-family: "Noto Sans TC", sans-serif;
+        }
+
+        .article-content {
+            line-height: 1.9;
+            overflow-wrap: anywhere;
+        }
+
+        .article-content h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #65452F;
+            margin-bottom: 1.5rem;
+        }
+
+        .article-content h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #8B6245;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #F5EBD8;
+            padding-bottom: 0.5rem;
+        }
+
+        .article-content h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #8B6245;
+            margin-top: 1.5rem;
+        }
+
+        .article-content p {
+            margin: 1rem 0;
+        }
+
+        .article-content ul,
+        .article-content ol {
+            padding-left: 1.8rem;
+            margin: 1rem 0;
+        }
+
+        .article-content ul {
+            list-style-type: disc;
+        }
+
+        .article-content ol {
+            list-style-type: decimal;
+        }
+
+        .article-content li {
+            margin: 0.5rem 0;
+        }
+
+        .article-content blockquote {
+            background: #FFFCF5;
+            border-left: 4px solid #C69B72;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-radius: 0.5rem;
+        }
+
+        .article-content img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 0.75rem;
+            margin: 1.5rem auto;
+        }
+
+        .article-content code {
+            background: #F5EBD8;
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.3rem;
+        }
+
+        .article-content pre {
+            background: #F5F0E8;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            overflow-x: auto;
+        }
+
+        .article-content a {
+            color: #9A704D;
+            text-decoration: underline;
+        }
+
+        .nav-link.active {
+            background: #F5EBD8;
+            color: #65452F;
+            font-weight: 700;
+        }
+
+        .nav-link:hover {
+            background: #FFFCF5;
+            color: #65452F;
+        }
+    </style>
+</head>
+
+<body class="bg-rat-cream text-stone-800 antialiased">
+
+<div class="min-h-screen flex flex-col md:flex-row">
+
+    <!-- 左側導覽列 -->
+    <aside class="w-full md:w-72 bg-white border-r border-amber-100 p-6 flex flex-col justify-between shadow-sm md:min-h-screen">
+
+        <div>
+
+            <!-- 網站 Logo -->
+            <a href="#" class="flex items-center space-x-3 mb-8">
+                <span class="text-4xl">🐀</span>
+
+                <div>
+                    <h1 class="font-bold text-xl text-rat-dark">
+                        FancyRat-Wiki
+                    </h1>
+
+                    <p class="text-xs text-stone-500">
+                        花枝鼠新手照護知識庫
+                    </p>
+                </div>
+            </a>
+
+            <!-- 搜尋欄 -->
+            <div class="mb-6">
+                <input
+                    id="search-input"
+                    type="text"
+                    placeholder="搜尋花枝鼠知識..."
+                    class="w-full px-4 py-3 text-sm border border-amber-100 rounded-xl outline-none focus:ring-2 focus:ring-amber-200"
+                >
+            </div>
+
+            <!-- 文章導覽 -->
+            <nav id="nav-links" class="space-y-3">
+                <p class="text-sm text-stone-400">
+                    正在載入知識分類...
+                </p>
+            </nav>
+
+        </div>
+
+        <!-- 側邊欄底部 -->
+        <div class="mt-8 pt-4 border-t border-stone-100 text-xs text-stone-400 text-center">
+            🐹 FancyRat-Wiki
+            <br>
+            Powered by AI & AGENTS.md
+        </div>
+
+    </aside>
+
+
+    <!-- 右側主要內容 -->
+    <main class="flex-1 p-5 md:p-12 w-full">
+
+        <div class="max-w-4xl mx-auto">
+
+            <!-- 頁面標題 -->
+            <div class="mb-6">
+                <p class="text-sm text-amber-700 font-medium">
+                    GERBIL CARE KNOWLEDGE
+                </p>
+
+                <h2 class="text-2xl font-bold text-rat-dark mt-2">
+                    花枝鼠知識小百科
+                </h2>
+
+                <p class="text-sm text-stone-500 mt-2">
+                    陪伴你一起了解花枝鼠的生活與照護知識。
+                </p>
+            </div>
+
+            <!-- 文章內容 -->
+            <article
+                id="content-area"
+                class="article-content bg-white p-6 md:p-12 rounded-2xl shadow-sm border border-amber-100 min-h-96"
+            >
+                <div class="text-center py-12">
+                    <div class="text-5xl mb-4">🐀</div>
+
+                    <h2 class="text-xl font-bold text-rat-dark">
+                        正在載入知識庫...
+                    </h2>
+
+                    <p class="text-stone-500 mt-3">
+                        請稍候，正在準備文章內容。
+                    </p>
+                </div>
+            </article>
+
+            <!-- 頁尾 -->
+            <footer class="text-center text-xs text-stone-400 mt-8 pb-8">
+                © FancyRat-Wiki | 花枝鼠知識小百科
+                <br>
+                希望每隻花枝鼠都能健康快樂地生活 ❤️
+            </footer>
+
+        </div>
+
+    </main>
+
+</div>
+
+
+<script>
+
+    // =====================================
+    // 1. 網站基本設定
+    // =====================================
+
+    const isGitHub =
+        window.location.hostname.endsWith('github.io');
+
+    // 自動取得 GitHub Pages 專案名稱
+    const projectName =
+        window.location.pathname.split('/').filter(Boolean)[0]
+        || 'fancy-rat-wiki';
+
+    const BASE_URL = isGitHub
+        ? `${window.location.origin}/${projectName}/`
+        : new URL('./', window.location.href).href;
+
+    console.log("網站基礎路徑：", BASE_URL);
+
+
+    // =====================================
+    // 2. 取得 HTML 元素
+    // =====================================
+
+    const navContainer = document.getElementById('nav-links');
+    const contentArea = document.getElementById('content-area');
+    const searchInput = document.getElementById('search-input');
+
+    let allArticles = [];
+
+
+    // =====================================
+    // 3. 顯示錯誤訊息
+    // =====================================
+
+    function showError(title, message) {
+
+        contentArea.innerHTML = '';
+
+        const heading = document.createElement('h2');
+        heading.className = 'text-red-600 font-bold text-xl mb-4';
+        heading.textContent = title;
+
+        const description = document.createElement('p');
+        description.className = 'text-stone-600 mb-4';
+        description.textContent = message;
+
+        contentArea.appendChild(heading);
+        contentArea.appendChild(description);
+
+    }
+
+
+    // =====================================
+    // 4. 正規化文章路徑
+    // =====================================
+
+    function normalizePath(path) {
+
+        return String(path || '')
+            .replace(/^\/+/, '')
+            .replace(/^content\//, '')
+            .replace(/\.md$/i, '');
+
+    }
+
+
+    // =====================================
+    // 5. 載入知識庫索引
+    // =====================================
+
+    async function loadWiki() {
+
+        try {
+
+            console.log("開始讀取文章索引...");
+
+            const indexUrl =
+                new URL('content/index.json', BASE_URL);
+
+            const response = await fetch(indexUrl);
+
+            console.log("索引 HTTP 狀態：", response.status);
+
+            if (!response.ok) {
+                throw new Error(
+                    '無法讀取 index.json：HTTP ' + response.status
+                );
+            }
+
+            const data = await response.json();
+
+            if (!data.categories) {
+                throw new Error('index.json 缺少 categories 資料');
+            }
+
+            allArticles = [];
+
+            // 建立側邊分類
+            navContainer.innerHTML = '';
+
+            data.categories.forEach(category => {
+
+                const section = document.createElement('div');
+
+                const title = document.createElement('p');
+
+                title.className =
+                    'text-xs font-semibold text-stone-400 mb-2 mt-5';
+
+                title.textContent = category.name;
+
+                section.appendChild(title);
+
+                const list = document.createElement('ul');
+
+                list.className = 'space-y-1';
+
+                category.articles.forEach(article => {
+
+                    const articlePath =
+                        normalizePath(article.path);
+
+                    const articleData = {
+                        title: article.title,
+                        path: articlePath,
+                        category: category.name
+                    };
+
+                    allArticles.push(articleData);
+
+                    const li = document.createElement('li');
+
+                    const link = document.createElement('a');
+
+                    link.href = '#' + articlePath;
+
+                    link.className =
+                        'nav-link block px-3 py-3 rounded-lg text-sm text-stone-600 transition';
+
+                    link.textContent = article.title;
+
+                    link.dataset.path = articlePath;
+
+                    link.addEventListener('click', function(event) {
+
+                        event.preventDefault();
+
+                        location.hash = articlePath;
+
+                        loadMarkdown(articlePath);
+
                     });
-                    section.appendChild(ul);
-                    navContainer.appendChild(section);
+
+                    list.appendChild(li);
+                    li.appendChild(link);
+
                 });
 
-                const hash = window.location.hash.substring(1);
-                loadMarkdown(hash || firstFile);
-            } catch (err) {
-                document.getElementById('content-area').innerHTML = `<h2 class="text-red-600 font-bold">載入失敗</h2><p>無法讀取 content/index.json 索引檔。</p>`;
+                section.appendChild(list);
+
+                navContainer.appendChild(section);
+
+            });
+
+            // 載入網址指定的文章
+            const hash = decodeURIComponent(
+                window.location.hash.substring(1)
+            );
+
+            if (hash) {
+
+                loadMarkdown(hash);
+
+            } else if (allArticles.length > 0) {
+
+                const firstArticle = allArticles[0].path;
+
+                location.hash = firstArticle;
+
+                loadMarkdown(firstArticle);
+
+            } else {
+
+                showError(
+                    '目前沒有文章',
+                    '請先在 content/index.json 新增文章資料。'
+                );
+
             }
+
+        } catch (error) {
+
+            console.error("知識庫索引載入錯誤：", error);
+
+            showError(
+                '知識庫載入失敗',
+                error.message
+            );
+
         }
 
-        async function loadMarkdown(path) {
-            if (!path) return;
-            try {
-                let cleanPath = path.replace(/^\/+/, '').replace(/\.md$/, '');
-                cleanPath += '.md';
-                
-                const targetUrl = BASE_URL + 'content/' + cleanPath;
-                
-                const res = await fetch(targetUrl);
-                if (!res.ok) throw new Error('File not found: ' + targetUrl);
-                
-                const markdownText = await res.text();
-                const contentWithoutFrontmatter = markdownText.replace(/^---[\s\S]*?---/, '');
-                document.getElementById('content-area').innerHTML = marked.parse(contentWithoutFrontmatter);
-            } catch (err) {
-                document.getElementById('content-area').innerHTML = `
-                    <h2 class="text-red-600 font-bold mb-2">找不到文章內容</h2>
-                    <p class="text-stone-600 mb-4">無法讀取 <code>content/${path}.md</code></p>
-                    <div class="bg-amber-50 p-4 rounded-lg text-xs text-stone-500">
-                        <strong>檢查建議：</strong><br>
-                        1. 請確認 GitHub 的 <code>content/</code> 資料夾內是否有該檔案。<br>
-                        2. 請確認資料夾與檔案名稱的大小寫與連字號。
-                    </div>`;
+    }
+
+
+    // =====================================
+    // 6. 載入 Markdown 文章
+    // =====================================
+
+    async function loadMarkdown(path) {
+
+        if (!path) return;
+
+        try {
+
+            const cleanPath = normalizePath(
+                decodeURIComponent(path)
+            );
+
+            const articleUrl = new URL(
+                'content/' + cleanPath + '.md',
+                BASE_URL
+            );
+
+            console.log("目前載入文章：", articleUrl.href);
+
+            // 顯示載入提示
+            contentArea.innerHTML = `
+                <div class="text-center py-12">
+                    <div class="text-5xl mb-4">🐀</div>
+                    <h2 class="text-xl font-bold text-rat-dark">
+                        正在載入文章...
+                    </h2>
+                </div>
+            `;
+
+            const response = await fetch(articleUrl);
+
+            console.log("文章 HTTP 狀態：", response.status);
+
+            if (!response.ok) {
+
+                throw new Error(
+                    'HTTP ' + response.status +
+                    '，無法讀取：' + articleUrl.href
+                );
+
             }
+
+            const markdownText = await response.text();
+
+            if (typeof marked === 'undefined') {
+
+                throw new Error(
+                    'Markdown 套件 Marked.js 尚未成功載入'
+                );
+
+            }
+
+            // 移除 Markdown Front Matter
+            const contentWithoutFrontmatter =
+                markdownText.replace(/^---[\s\S]*?---\s*/, '');
+
+            // 轉換 Markdown
+            const htmlContent = marked.parse(
+                contentWithoutFrontmatter
+            );
+
+            contentArea.innerHTML = htmlContent;
+
+            // 更新側邊欄選取狀態
+            document.querySelectorAll('.nav-link').forEach(link => {
+
+                link.classList.toggle(
+                    'active',
+                    link.dataset.path === cleanPath
+                );
+
+            });
+
+            // 更新瀏覽器標題
+            const currentArticle = allArticles.find(
+                article => article.path === cleanPath
+            );
+
+            if (currentArticle) {
+
+                document.title =
+                    currentArticle.title + ' | FancyRat-Wiki';
+
+            }
+
+            console.log("文章載入成功！");
+
+        } catch (error) {
+
+            console.error("文章載入錯誤：", error);
+
+            showError(
+                '文章載入發生錯誤',
+                error.message
+            );
+
         }
 
-        window.addEventListener('hashchange', () => {
-            const hash = window.location.hash.substring(1);
-            if (hash) loadMarkdown(hash);
+    }
+
+
+    // =====================================
+    // 7. 網址 Hash 變更
+    // =====================================
+
+    window.addEventListener('hashchange', function() {
+
+        const hash = decodeURIComponent(
+            window.location.hash.substring(1)
+        );
+
+        if (hash) {
+
+            loadMarkdown(hash);
+
+        }
+
+    });
+
+
+    // =====================================
+    // 8. 搜尋文章
+    // =====================================
+
+    searchInput.addEventListener('input', function() {
+
+        const keyword = this.value.trim().toLowerCase();
+
+        navContainer.innerHTML = '';
+
+        const results = allArticles.filter(article => {
+
+            return (
+                article.title.toLowerCase().includes(keyword) ||
+                article.category.toLowerCase().includes(keyword)
+            );
+
         });
 
-        loadWiki();
-    </script>
+        if (results.length === 0) {
+
+            navContainer.innerHTML = `
+                <p class="text-sm text-stone-400 p-3">
+                    找不到符合的文章。
+                </p>
+            `;
+
+            return;
+
+        }
+
+        results.forEach(article => {
+
+            const link = document.createElement('a');
+
+            link.href = '#' + article.path;
+
+            link.className =
+                'nav-link block px-3 py-3 rounded-lg text-sm text-stone-600 transition';
+
+            link.textContent =
+                article.category + '｜' + article.title;
+
+            link.dataset.path = article.path;
+
+            link.addEventListener('click', function(event) {
+
+                event.preventDefault();
+
+                location.hash = article.path;
+
+                loadMarkdown(article.path);
+
+            });
+
+            navContainer.appendChild(link);
+
+        });
+
+    });
+
+
+    // =====================================
+    // 9. 啟動網站
+    // =====================================
+
+    loadWiki();
+
+</script>
+
 </body>
 </html>
